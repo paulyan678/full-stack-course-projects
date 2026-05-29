@@ -1,0 +1,34 @@
+services:
+  backend:
+    build: ./backend
+    env_file: .env
+    environment:
+      PORT: "8080"
+      PUBLIC_URL: http://localhost:3000
+      TRUST_PROXY: "true"
+      DATA_FILE: /data/socialai.json
+      MEDIA_DIRECTORY: /media
+    volumes:
+      - socialai-data:/data
+      - socialai-media:/media
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  web:
+    build: ./web
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+
+volumes:
+  socialai-data:
+  socialai-media:
