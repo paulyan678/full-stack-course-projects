@@ -1,0 +1,11 @@
+.DS_Store
+.env
+.gradle/
+**/.gradle/
+**/.kotlin/
+**/build/
+android/local.properties
+android/.idea/
+backend/.idea/
+*.iml
+local-tooling/
