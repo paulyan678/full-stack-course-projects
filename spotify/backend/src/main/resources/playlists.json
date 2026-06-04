@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "songs": [
+      {"name":"Night Signals","lyric":"The Sample Tones","src":"/songs/night-signals.wav","length":"00:05"},
+      {"name":"Afterimage","lyric":"The Sample Tones","src":"/songs/afterimage.wav","length":"00:05"},
+      {"name":"Last Exit","lyric":"The Sample Tones","src":"/songs/last-exit.wav","length":"00:05"}
+    ]
+  },
+  {
+    "id": 2,
+    "songs": [
+      {"name":"Parallel Lines","lyric":"Open Circuit","src":"/songs/parallel-lines.wav","length":"00:05"},
+      {"name":"Small Angles","lyric":"Open Circuit","src":"/songs/small-angles.wav","length":"00:05"},
+      {"name":"Proof","lyric":"Open Circuit","src":"/songs/proof.wav","length":"00:05"}
+    ]
+  },
+  {
+    "id": 3,
+    "songs": [
+      {"name":"Windows Open","lyric":"Fixture Club","src":"/songs/windows-open.wav","length":"00:05"},
+      {"name":"Dust in Light","lyric":"Fixture Club","src":"/songs/dust-in-light.wav","length":"00:05"},
+      {"name":"Four PM","lyric":"Fixture Club","src":"/songs/four-pm.wav","length":"00:05"}
+    ]
+  },
+  {
+    "id": 4,
+    "songs": [
+      {"name":"Cobalt","lyric":"Localhost Ensemble","src":"/songs/cobalt.wav","length":"00:05"},
+      {"name":"Streetlights","lyric":"Localhost Ensemble","src":"/songs/streetlights.wav","length":"00:05"},
+      {"name":"Before Sunrise","lyric":"Localhost Ensemble","src":"/songs/before-sunrise.wav","length":"00:05"}
+    ]
+  },
+  {
+    "id": 5,
+    "songs": [
+      {"name":"Electric Fruit","lyric":"The Mock Servers","src":"/songs/electric-fruit.wav","length":"00:05"},
+      {"name":"Bloom Loop","lyric":"The Mock Servers","src":"/songs/bloom-loop.wav","length":"00:05"},
+      {"name":"Green Noise","lyric":"The Mock Servers","src":"/songs/green-noise.wav","length":"00:05"}
+    ]
+  }
+]

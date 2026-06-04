@@ -1,0 +1,52 @@
+[
+  {
+    "section_title": "Made for local development",
+    "albums": [
+      {
+        "id": 1,
+        "album": "Midnight Drive",
+        "year": "2025",
+        "cover": "/covers/1.svg",
+        "artists": "The Sample Tones",
+        "description": "Warm electronic sketches generated entirely by the local demo server."
+      },
+      {
+        "id": 2,
+        "album": "Quiet Geometry",
+        "year": "2024",
+        "cover": "/covers/2.svg",
+        "artists": "Open Circuit",
+        "description": "Minimal pulses for testing favorites, navigation, and playback."
+      },
+      {
+        "id": 3,
+        "album": "Sunroom Sessions",
+        "year": "2026",
+        "cover": "/covers/3.svg",
+        "artists": "Fixture Club",
+        "description": "Short royalty-free tones that keep the full stack self-contained."
+      }
+    ]
+  },
+  {
+    "section_title": "Fresh fixtures",
+    "albums": [
+      {
+        "id": 4,
+        "album": "Blue Hour",
+        "year": "2026",
+        "cover": "/covers/4.svg",
+        "artists": "Localhost Ensemble",
+        "description": "A tiny album made for repeatable emulator demos."
+      },
+      {
+        "id": 5,
+        "album": "Neon Orchard",
+        "year": "2025",
+        "cover": "/covers/5.svg",
+        "artists": "The Mock Servers",
+        "description": "Synthetic media with no account, API key, or subscription required."
+      }
+    ]
+  }
+]
