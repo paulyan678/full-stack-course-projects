@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:onlineorder-demo;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+      data-locations: classpath:data.sql
+  cache:
+    type: simple
+  jackson:
+    default-property-inclusion: non_null
+    property-naming-strategy: SNAKE_CASE
+
+logging:
+  level:
+    root: INFO
+    org.springframework.security: INFO

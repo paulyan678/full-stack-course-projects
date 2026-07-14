@@ -9,6 +9,12 @@ The result has two independent Gradle projects:
 
 No account, API key, subscription, database server, or paid service is required.
 
+## Product tour
+
+![Source-driven Spotify Compose walkthrough: Home, Midnight Drive playlist, Night Signals playback and favorite, then Favorites](../docs/assets/demos/spotify-demo.gif)
+
+This animation is a deterministic, source-driven walkthrough rendered from the actual Compose states and checked-in feed/playlist fixtures. It documents the implemented Home → playlist → playback/favorite → Favorites path, but is intentionally labeled as a source rendering rather than emulator footage. A [static poster frame](../docs/assets/demos/spotify-poster.png) is also available.
+
 ## What works
 
 - Home presents album sections from `GET /feed`.
@@ -17,22 +23,39 @@ No account, API key, subscription, database server, or paid service is required.
 - Favorites observes Room as a `Flow`, survives restarts, and links back to album detail.
 - Tapping a song loads and plays it through Media3/ExoPlayer.
 - A shared floating player remains above bottom navigation, with play/pause, progress, seeking, art, and playback errors.
-- The Ktor server generates and caches five-second WAV tones and SVG album covers for catalog entries. Audio supports bounded byte-range requests for Media3 seeking. Fixtures are royalty-free, deterministic, and require no binary media checkout.
+- The Ktor server caches generated five-second WAV tones and generates SVG album covers for catalog entries. Audio supports bounded byte-range requests for Media3 seeking. Both media routes send cache headers; fixtures are royalty-free, deterministic, and require no binary media checkout.
 - Loading, empty, network-error, bad-id, and playback-error states are represented.
 
 ## Architecture
 
-```text
-Android Compose UI
-  -> Hilt ViewModels + StateFlow
-      -> repository interfaces
-          -> Retrofit -> Ktor fixture API
-          -> Room -> favorite_albums
-      -> PlaybackController -> Media3 ExoPlayer
+```mermaid
+flowchart LR
+    Activity["MainActivity + SpotifyTheme"]
+    App["SpotifyApp<br/>Scaffold, NavHost, shared PlayerBar"]
+    Screens["Home, Playlist, and Favorites screens"]
+    ViewModels["Hilt ViewModels + StateFlow"]
+    Network["Feed and playlist repositories<br/>in-process feed cache"]
+    Retrofit["Retrofit + OkHttp"]
+    API["Ktor fixture API"]
+    Catalog["FixtureCatalog<br/>feed.json + playlists.json"]
+    Covers["CoverFixture<br/>generated SVG covers"]
+    Audio["AudioFixture<br/>cached 5-second WAV + byte ranges"]
+    Favorites["RoomFavoritesRepository"]
+    Room["Room DAO<br/>favorite_albums"]
+    Player["Activity-scoped PlayerViewModel"]
+    Media3["PlaybackController<br/>Media3 ExoPlayer"]
 
-Ktor routing
-  -> validated classpath JSON catalog
-  -> generated SVG cover / WAV audio fixtures
+    Activity --> App --> Screens --> ViewModels
+    ViewModels --> Network --> Retrofit --> API
+    API --> Catalog
+    API --> Covers
+    ViewModels --> Favorites --> Room
+    Room -->|"Flow updates"| ViewModels
+    Screens -->|"Coil cover requests"| API
+    Screens -->|"Tap song"| Player --> Media3
+    Media3 -->|"GET /songs/*.wav"| API
+    API --> Audio
+    Media3 -->|"Playback StateFlow"| Player --> App
 ```
 
 Important Android packages:

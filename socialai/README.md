@@ -4,6 +4,12 @@ SocialAI is a Go + React social-media application. Users can register, sign in, 
 
 It works locally without any cloud account: JSON-file persistence, local media storage, and an SVG-based AI preview are the defaults. Elasticsearch, Google Cloud Storage, and OpenAI Images are selectable production adapters.
 
+## Product tour
+
+![SocialAI live local workflow: generate an image, publish it, browse the collection, and open the lightbox](../docs/assets/demos/socialai-demo.gif)
+
+This is a live local run of the default adapters: the prompt produces a deterministic SVG preview, the preview is published through the real API, and the resulting post is opened from the collection. A [static poster frame](../docs/assets/demos/socialai-poster.png) is also available.
+
 ## Run locally
 
 Prerequisites: Go 1.22+, Node 20+, and pnpm 9+.
@@ -47,13 +53,41 @@ Backend tests cover password hashing, token tamper/expiry checks, both local rep
 
 ## Architecture
 
-```text
-web (React + Vite)
-  └── JSON / multipart API
-      └── Go HTTP handlers + auth middleware
-          ├── Repository: memory | file | Elasticsearch
-          ├── Media: local filesystem | Google Cloud Storage
-          └── AI images: local preview | OpenAI
+```mermaid
+flowchart LR
+    UI["React + Router<br/>sessionStorage or opt-in localStorage"]
+    API["Go net/http mux<br/>CORS, limits, security, recovery"]
+    Auth["PBKDF2 credentials<br/>HS256 bearer-token middleware"]
+    Handlers["Auth, post, and AI handlers"]
+    Repository{"Repository adapter"}
+    Memory["Memory"]
+    File["Crash-safe JSON file"]
+    Elasticsearch["Elasticsearch"]
+    Generator{"Image generator adapter"}
+    SVG["Local deterministic SVG"]
+    OpenAI["OpenAI Images"]
+    Storage{"Media storage adapter"}
+    Local["Local files + /media"]
+    GCS["Google Cloud Storage"]
+    Draft["In-process generated draft<br/>owner + 1-hour TTL"]
+
+    UI -->|"Signup / signin"| API --> Handlers
+    UI -->|"Bearer JWT; JSON / multipart"| API --> Auth --> Handlers
+    Handlers --> Repository
+    Repository --> Memory
+    Repository --> File
+    Repository --> Elasticsearch
+    Handlers --> Generator
+    Generator --> SVG
+    Generator --> OpenAI
+    SVG --> Storage
+    OpenAI --> Storage
+    Storage --> Local
+    Storage --> GCS
+    Storage --> Draft
+    Draft -->|"Publish metadata"| Repository
+    Repository -->|"Posts"| UI
+    Storage -->|"Media URL"| UI
 ```
 
 The Go packages are organized around interfaces rather than cloud globals, so tests use in-memory/local adapters and production services remain optional. The backend uses only the Go standard library.

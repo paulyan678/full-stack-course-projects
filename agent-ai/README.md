@@ -4,6 +4,12 @@ Agent AI is a local-first PDF question-answering application built with Express,
 
 The application works without paid credentials: local mode ranks document passages and produces an extractive answer. Add OpenAI and SerpAPI keys to enable model-written answers and MCP-backed web research.
 
+## Product tour
+
+![Agent AI live local workflow: upload a PDF, ask a grounded question, and expand the matching page source](../docs/assets/demos/agent-ai-demo.gif)
+
+This is a live local run of the credential-free path: a real two-page PDF is parsed, the refund and support question is answered from its text, and the page-two evidence is expanded. A [static poster frame](../docs/assets/demos/agent-ai-poster.png) is also available.
+
 ## What is included
 
 - React 19 + Vite responsive UI with drag-and-drop upload, conversation history, source excerpts, dictation, speech playback, and keyboard/accessibility support
@@ -18,11 +24,34 @@ The application works without paid credentials: local mode ranks document passag
 
 ## Architecture
 
-```text
-React browser
-  ├─ POST /api/documents ──> Express ──> PDF parser ──> expiring DocumentStore
-  └─ POST /api/chat ───────> retrieval ──> local answer or OpenAI Responses API
-                                      └──> MCP client ─stdio─> MCP search server ──> SerpAPI
+```mermaid
+flowchart LR
+    UI["React client"]
+    API["Express API<br/>security headers, CORS, rate limits"]
+    Upload["Multer memory buffer"]
+    Parse["pdf-parse<br/>page extraction"]
+    Store["DocumentStore<br/>UUID, chunks, TTL, process memory"]
+    Rank["rankChunks<br/>lexical top 4"]
+    Mode{"Answerer mode"}
+    Local["Local extractive answer"]
+    OpenAI["OpenAI Responses API"]
+    MCP["MCP client"]
+    Search["MCP search server"]
+    Serp["SerpAPI"]
+    Result["Answer + page excerpts<br/>optional web results"]
+
+    UI -->|"POST /api/documents"| API
+    API --> Upload --> Parse --> Store
+    UI -->|"POST /api/chat"| API
+    API -->|"documentId"| Store
+    Store --> Rank --> Mode
+    Mode -->|"No OPENAI_API_KEY"| Local --> Result
+    Mode -->|"OPENAI_API_KEY"| OpenAI --> Result
+    API -->|"includeWeb + SERPAPI_KEY"| MCP
+    MCP -->|"stdio"| Search
+    Search -->|"HTTPS search"| Serp
+    Serp --> Result
+    Result --> UI
 ```
 
 Uploaded text lives only in process memory and expires after `DOCUMENT_TTL_MS`. Restarting the server clears it immediately. Per-document sessions avoid process-global file paths, unsafe original-name disk writes, and cross-user document leakage.

@@ -5,15 +5,134 @@ This repo contains four independently runnable applications. Each project owns i
 | Project | Product | Primary stack | Credential-free local path |
 | --- | --- | --- | --- |
 | [Agent AI](./agent-ai/README.md) | PDF-grounded question answering with optional web comparison | Node.js 22, Express 5, React 19, Vite, MCP | Extractive local retrieval and answers |
-| [OnlineOrder](./onlineorder/README.md) | Secure restaurant browsing, cart, and checkout | Java 21, Spring Boot 3, PostgreSQL, React 18, Ant Design | H2-backed tests; PostgreSQL through Compose for the full app |
+| [OnlineOrder](./onlineorder/README.md) | Secure restaurant browsing, cart, and checkout | Java 21, Spring Boot 3, PostgreSQL, React 18, Ant Design | In-memory H2 demo profile; PostgreSQL through Compose |
 | [SocialAI](./socialai/README.md) | Authenticated media collection with AI image generation | Go, React 18, Vite, pluggable storage/search/AI adapters | JSON persistence, local media, generated SVG previews |
 | [Spotify Local](./spotify/README.md) | Native album, favorites, and music-playback experience | Kotlin, Ktor, Android Compose, Hilt, Retrofit, Room, Media3 | Generated local covers and royalty-free WAV fixtures |
+
+## Application walkthroughs
+
+The first three walkthroughs were recorded from live local builds and follow the real application paths. Spotify's walkthrough is rendered from the checked-in fixtures and the app's Compose state because it requires an Android runtime; the animation labels this explicitly and does not present itself as emulator footage.
+
+<table>
+  <tr>
+    <td width="50%">
+      <a href="./agent-ai/README.md"><img src="./docs/assets/demos/agent-ai-demo.gif" alt="Agent AI live local workflow: upload a PDF, ask a grounded question, and inspect page sources" width="100%"></a><br>
+      <strong>Agent AI</strong><br>
+      <sub>Upload a real PDF → ask a grounded question → expand the matching page source.</sub>
+    </td>
+    <td width="50%">
+      <a href="./onlineorder/README.md"><img src="./docs/assets/demos/onlineorder-demo.gif" alt="OnlineOrder live local workflow: sign in, browse a menu, add items, and check out" width="100%"></a><br>
+      <strong>OnlineOrder / Lai Food</strong><br>
+      <sub>Sign in → browse the seeded menu → aggregate quantity and total → check out.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <a href="./socialai/README.md"><img src="./docs/assets/demos/socialai-demo.gif" alt="SocialAI live local workflow: generate an image, publish it, and open it from the collection" width="100%"></a><br>
+      <strong>SocialAI</strong><br>
+      <sub>Generate with the local AI adapter → publish → browse and open the collection item.</sub>
+    </td>
+    <td width="50%">
+      <a href="./spotify/README.md"><img src="./docs/assets/demos/spotify-demo.gif" alt="Source-driven Spotify Compose walkthrough: browse Home, open a playlist, play and favorite a song, then view Favorites" width="100%"></a><br>
+      <strong>Spotify Local</strong><br>
+      <sub>Source-driven Compose walkthrough: Home → playlist → playback and favorite → Favorites.</sub>
+    </td>
+  </tr>
+</table>
+
+Static poster frames are stored beside the animations in [`docs/assets/demos`](./docs/assets/demos/).
+
+## System flow charts
+
+These charts follow the concrete request, storage, and playback paths implemented in each project.
+
+### Agent AI
+
+```mermaid
+flowchart LR
+    user["User"] --> ui["React document and chat UI"]
+    ui -->|"PDF multipart upload"| api["Express security, CORS, and rate limits"]
+    api --> pdf["Multer memory upload and PDF parser"]
+    pdf --> store["Expiring in-memory DocumentStore"]
+    store --> chunks["Page-aware chunks"]
+    ui -->|"documentId + question"| api
+    chunks --> rank["Lexical ranker: top 4 chunks"]
+    api --> rank
+    rank --> local["Local extractive answer"]
+    rank -.-> openai["Optional OpenAI Responses synthesis"]
+    api -.-> mcp["Optional includeWeb → MCP client over stdio"]
+    mcp --> search["MCP search server → SerpAPI"]
+    local --> response["Answer + page sources"]
+    openai --> response
+    search --> response
+    response --> ui
+```
+
+### OnlineOrder / Lai Food
+
+```mermaid
+flowchart LR
+    customer["Customer"] --> react["React + Ant Design client"]
+    react -->|"Vite proxy or Nginx /api"| security["Spring Security: session + CSRF"]
+    security --> controllers["Auth, menu, customer, and cart controllers"]
+    controllers --> services["Transactional services"]
+    services <--> cache["Spring Cache: Caffeine in PostgreSQL mode"]
+    services --> jdbc["Spring Data JDBC repositories"]
+    jdbc --> profile{"Active data profile"}
+    profile -->|"demo"| h2["In-memory H2 + seeded schema"]
+    profile -->|"default / Compose"| postgres["PostgreSQL + idempotent seed data"]
+    services -->|"checkout"| clear["Delete order items and reset cart total"]
+    clear --> react
+```
+
+### SocialAI
+
+```mermaid
+flowchart LR
+    user["Signed-in user"] --> web["React routes + token storage"]
+    web -->|"JSON or multipart + Bearer JWT"| middleware["Go HTTP security, CORS, and auth middleware"]
+    middleware --> handlers["Auth, post, search, and AI handlers"]
+    handlers --> repo{"Repository adapter"}
+    repo --> memory["Memory"]
+    repo --> file["JSON file"]
+    repo --> elastic["Elasticsearch"]
+    handlers --> media{"Media adapter"}
+    media --> localMedia["Local filesystem"]
+    media --> gcs["Google Cloud Storage"]
+    handlers --> generator{"Image generator"}
+    generator --> svg["Deterministic local SVG"]
+    generator --> images["OpenAI Images"]
+    generator -->|"preview object"| media
+    handlers -->|"publish metadata"| repo
+    repo -->|"collection results"| web
+```
+
+### Spotify Local
+
+```mermaid
+flowchart LR
+    user["Android user"] --> compose["Compose screens + Navigation"]
+    compose --> vm["Home, Playlist, Favorites, and Player ViewModels"]
+    vm --> feedRepo["Feed / playlist repositories"]
+    feedRepo --> retrofit["Retrofit client"]
+    retrofit --> ktor["Ktor fixture API"]
+    ktor --> catalog["Validated feed.json + playlists.json"]
+    catalog --> cover["Generated SVG covers"]
+    catalog --> audio["Generated WAV + byte-range responses"]
+    vm --> favorites["Favorites repository"]
+    favorites --> room["Room DAO Flow"]
+    vm --> playback["PlaybackController"]
+    playback --> media3["Media3 ExoPlayer"]
+    room --> compose
+    media3 --> compose
+```
 
 ## Repository layout
 
 ```text
-projects/
+full-stack-projects/
 ├── README.md                  Monorepo overview and verification guide
+├── docs/assets/demos/         README animations and static poster frames
 ├── agent-ai/
 │   ├── client/                React/Vite browser app
 │   ├── server/                Express API, RAG, PDF, and MCP layers
@@ -60,7 +179,7 @@ Key capabilities:
 
 ### OnlineOrder / Lai Food
 
-OnlineOrder is a transactional full-stack food-ordering application. Customers can register, sign in, browse seeded restaurants and menus, add quantities to a personal cart, see precise decimal totals, and check out. PostgreSQL schema constraints and indexes enforce the domain model, while idempotent seed scripts make repeated local starts safe.
+OnlineOrder is a transactional full-stack food-ordering application. Customers can register, sign in, browse seeded restaurants and menus, add quantities to a personal cart, see precise decimal totals, and complete a demo checkout. Checkout atomically clears the active cart; payment processing and a persisted order ledger are outside this project's scope. PostgreSQL schema constraints and indexes enforce the domain model, while idempotent seed scripts make repeated local starts safe.
 
 The Java 21 backend uses Spring Boot Web, Security, Data JDBC, Validation, Actuator, Caffeine, BCrypt, server-side sessions, and CSRF protection. The React 18/Ant Design client handles authentication, menu browsing, cart interactions, loading, and failures. Docker Compose connects PostgreSQL, a non-root API image, and an Nginx frontend.
 
@@ -68,7 +187,7 @@ Key capabilities:
 
 - session fixation protection and CSRF on state-changing browser requests;
 - passwords in request bodies and BCrypt hashes at rest;
-- authenticated, per-customer carts with mutation-driven cache eviction;
+- authenticated, per-customer carts with mutation-driven Spring Cache eviction—Caffeine in the default/PostgreSQL profile and the simple in-memory provider in the demo profile;
 - H2-backed service and HTTP integration tests independent of Docker;
 - production JAR and frontend bundle verification.
 
